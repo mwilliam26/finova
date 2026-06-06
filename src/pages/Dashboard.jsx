@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Wallet, TrendingUp, TrendingDown, RefreshCw, Plus } from 'lucide-react'
+import { Wallet, TrendingUp, TrendingDown, Plus } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
 import StatCard from '../components/StatCard'
@@ -9,24 +9,34 @@ import { getTransactions, seedTransactions } from '../services/api'
 import axios from 'axios'
 import { useLang } from '../contexts/LangContext'
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-const BAR_DATA = [
-  { month: 'Jan', income: 5200, expense: 3100 },
-  { month: 'Feb', income: 4800, expense: 2900 },
-  { month: 'Mar', income: 6100, expense: 3800 },
-  { month: 'Apr', income: 5600, expense: 3200 },
-  { month: 'May', income: 7000, expense: 4100 },
-  { month: 'Jun', income: 6400, expense: 3600 },
-]
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const DONUT_COLORS = ['#F97316', '#3B82F6', '#A855F7', '#10B981', '#6B7280']
 
-const DONUT_DATA = [
-  { label: 'Housing', value: 42, color: '#F97316' },
-  { label: 'Food', value: 28, color: '#3B82F6' },
-  { label: 'Transport', value: 18, color: '#A855F7' },
-  { label: 'Misc', value: 12, color: '#6B7280' },
-]
+function DonutChart({ data, loading }) {
+  if (loading) {
+    return (
+      <div className="flex items-center gap-6 animate-pulse">
+        <div className="w-40 h-40 rounded-full bg-bg-main shrink-0" />
+        <div className="space-y-3 flex-1">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-bg-main shrink-0" />
+              <div className="h-3 bg-bg-main rounded flex-1" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
-function DonutChart({ data }) {
+  if (!data.length) {
+    return (
+      <div className="h-40 flex items-center justify-center text-text-secondary text-sm">
+        No expenses yet
+      </div>
+    )
+  }
+
   const total = data.reduce((s, d) => s + d.value, 0)
   let offset = 0
   const r = 60, cx = 80, cy = 80, stroke = 20
@@ -55,7 +65,7 @@ function DonutChart({ data }) {
           return seg
         })}
         <text x={cx} y={cy - 4} textAnchor="middle" fill="#fff" fontSize="18" fontWeight="700">
-          {total}%
+          100%
         </text>
         <text x={cx} y={cy + 14} textAnchor="middle" fill="#9CA3AF" fontSize="10">
           total
@@ -74,8 +84,32 @@ function DonutChart({ data }) {
   )
 }
 
-function BarChart({ data }) {
-  const max = Math.max(...data.flatMap((d) => [d.income, d.expense]))
+function BarChart({ data, loading }) {
+  if (loading) {
+    return (
+      <div className="flex items-end gap-2 h-36 animate-pulse">
+        {[55, 70, 45, 85, 65, 75].map((h, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-1">
+            <div className="w-full flex items-end gap-0.5 h-28">
+              <div className="flex-1 bg-bg-main rounded-t-sm" style={{ height: `${h}%` }} />
+              <div className="flex-1 bg-bg-main rounded-t-sm" style={{ height: `${h * 0.6}%` }} />
+            </div>
+            <div className="h-3 w-5 bg-bg-main rounded" />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (!data.length) {
+    return (
+      <div className="h-36 flex items-center justify-center text-text-secondary text-sm">
+        No data available
+      </div>
+    )
+  }
+
+  const max = Math.max(...data.flatMap((d) => [d.income, d.expense]), 1)
   return (
     <div className="flex items-end gap-2 h-36">
       {data.map((d) => (
@@ -196,6 +230,49 @@ export default function Dashboard() {
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 3)
 
+  const barData = useMemo(() => {
+    const monthMap = {}
+    transactions.forEach((tx) => {
+      const d = new Date(tx.date)
+      if (isNaN(d)) return
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      if (!monthMap[key]) {
+        monthMap[key] = { income: 0, expense: 0, monthNum: d.getMonth() }
+      }
+      if (tx.type === 'income' || tx.amount > 0) {
+        monthMap[key].income += Math.abs(tx.amount)
+      } else {
+        monthMap[key].expense += Math.abs(tx.amount)
+      }
+    })
+    return Object.entries(monthMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-6)
+      .map(([, v]) => ({ month: MONTH_NAMES[v.monthNum], income: v.income, expense: v.expense }))
+  }, [transactions])
+
+  const donutData = useMemo(() => {
+    const expenses = transactions.filter((t) => t.type === 'expense' || t.amount < 0)
+    const byCategory = {}
+    expenses.forEach((tx) => {
+      byCategory[tx.category] = (byCategory[tx.category] || 0) + Math.abs(tx.amount)
+    })
+    const total = Object.values(byCategory).reduce((s, v) => s + v, 0)
+    if (!total) return []
+    const sorted = Object.entries(byCategory).sort((a, b) => b[1] - a[1])
+    const top = sorted.slice(0, 4)
+    const otherTotal = sorted.slice(4).reduce((s, [, v]) => s + v, 0)
+    const result = top.map(([label, value], i) => ({
+      label,
+      value: Math.round((value / total) * 100),
+      color: DONUT_COLORS[i],
+    }))
+    if (otherTotal > 0) {
+      result.push({ label: 'Other', value: Math.round((otherTotal / total) * 100), color: DONUT_COLORS[4] })
+    }
+    return result
+  }, [transactions])
+
   const CATEGORY_ICONS = {
     Housing: '🏠', Food: '🍔', Transport: '🚗', Healthcare: '💊',
     Entertainment: '🎮', Salary: '💼', Freelance: '💻', Investment: '📈', Misc: '📦',
@@ -252,7 +329,7 @@ export default function Dashboard() {
                   </span>
                 </div>
               </div>
-              <BarChart data={BAR_DATA} />
+              <BarChart data={barData} loading={loadingTx} />
             </div>
 
             {/* Exchange rates */}
@@ -325,7 +402,7 @@ export default function Dashboard() {
             {/* Spending Analysis */}
             <div className="bg-bg-card border border-border-subtle rounded-2xl p-5">
               <h3 className="text-text-main font-semibold text-sm mb-4">{t('Spending Analysis')}</h3>
-              <DonutChart data={DONUT_DATA} />
+              <DonutChart data={donutData} loading={loadingTx} />
             </div>
           </div>
 

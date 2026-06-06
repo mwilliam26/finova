@@ -23,7 +23,7 @@ export default function Payments() {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <Navbar onMenuClick={() => setSidebarOpen(true)} />
+        <Navbar onMenuOpen={() => setSidebarOpen(true)} onAddTransaction={() => {}} />
 
         <main className="flex-1 px-4 lg:px-8 py-6 space-y-6">
           <div>
