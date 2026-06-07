@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CreditCard, Plus, Zap, Shield, Smartphone } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
+import { useLang } from '../contexts/LangContext'
 
 const CARDS = [
   { id: 1, label: 'Visa ending in 4242', brand: 'Visa', last4: '4242', expiry: '12/27', default: true },
@@ -16,6 +17,7 @@ const RECENT_PAYMENTS = [
 ]
 
 export default function Payments() {
+  const { t } = useLang()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -27,17 +29,17 @@ export default function Payments() {
 
         <main className="flex-1 px-4 lg:px-8 py-6 space-y-6">
           <div>
-            <h1 className="text-text-main text-2xl font-bold">Payments</h1>
-            <p className="text-text-secondary text-sm mt-1">Manage your payment methods and billing</p>
+            <h1 className="text-text-main text-2xl font-bold">{t('Payments')}</h1>
+            <p className="text-text-secondary text-sm mt-1">{t('Manage your payment methods and billing')}</p>
           </div>
 
           {/* Payment Methods */}
           <div className="bg-bg-card border border-border-subtle rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-text-main font-semibold">Payment Methods</h2>
+              <h2 className="text-text-main font-semibold">{t('Payment Methods')}</h2>
               <button className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
                 <Plus size={14} />
-                Add Card
+                {t('Add Card')}
               </button>
             </div>
 
@@ -59,7 +61,7 @@ export default function Payments() {
                   <div className="flex items-center gap-2">
                     {card.default && (
                       <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-                        Default
+                        {t('Default')}
                       </span>
                     )}
                   </div>
@@ -75,9 +77,9 @@ export default function Payments() {
                 <Shield size={18} className="text-blue-400" />
               </div>
               <div>
-                <p className="text-text-main text-sm font-semibold">Secure Payments</p>
+                <p className="text-text-main text-sm font-semibold">{t('Secure Payments')}</p>
                 <p className="text-text-secondary text-xs mt-1 leading-relaxed">
-                  All transactions are encrypted and protected by 256-bit SSL.
+                  {t('All transactions are encrypted and protected by 256-bit SSL.')}
                 </p>
               </div>
             </div>
@@ -86,9 +88,9 @@ export default function Payments() {
                 <Smartphone size={18} className="text-purple-400" />
               </div>
               <div>
-                <p className="text-text-main text-sm font-semibold">Two-Factor Auth</p>
+                <p className="text-text-main text-sm font-semibold">{t('Two-Factor Auth')}</p>
                 <p className="text-text-secondary text-xs mt-1 leading-relaxed">
-                  Enable 2FA for an extra layer of security on every payment.
+                  {t('Enable 2FA for an extra layer of security on every payment.')}
                 </p>
               </div>
             </div>
@@ -96,7 +98,7 @@ export default function Payments() {
 
           {/* Recent Payments */}
           <div className="bg-bg-card border border-border-subtle rounded-2xl p-6">
-            <h2 className="text-text-main font-semibold mb-4">Recent Payments</h2>
+            <h2 className="text-text-main font-semibold mb-4">{t('Recent Payments')}</h2>
             <div className="space-y-3">
               {RECENT_PAYMENTS.map((p) => (
                 <div key={p.id} className="flex items-center justify-between py-2 border-b border-border-subtle last:border-0">
@@ -114,7 +116,7 @@ export default function Payments() {
                       ${Math.abs(p.amount).toFixed(2)}
                     </p>
                     <span className="text-xs bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full">
-                      {p.status}
+                      {t(p.status)}
                     </span>
                   </div>
                 </div>

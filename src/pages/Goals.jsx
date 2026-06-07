@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Target, Plus, TrendingUp } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
+import { useLang } from '../contexts/LangContext'
 
 const GOALS = [
   { id: 1, name: 'Emergency Fund', target: 10000, current: 6200, color: '#F97316' },
@@ -11,6 +12,7 @@ const GOALS = [
 ]
 
 function GoalCard({ goal }) {
+  const { t } = useLang()
   const pct = Math.min(Math.round((goal.current / goal.target) * 100), 100)
   const remaining = goal.target - goal.current
 
@@ -23,7 +25,7 @@ function GoalCard({ goal }) {
           </div>
           <div>
             <p className="text-text-main text-sm font-semibold">{goal.name}</p>
-            <p className="text-text-secondary text-xs">${goal.current.toLocaleString()} of ${goal.target.toLocaleString()}</p>
+            <p className="text-text-secondary text-xs">${goal.current.toLocaleString()} {t('saved of')} ${goal.target.toLocaleString()}</p>
           </div>
         </div>
         <span className="text-text-main text-sm font-bold">{pct}%</span>
@@ -37,13 +39,14 @@ function GoalCard({ goal }) {
       </div>
 
       <p className="text-text-secondary text-xs">
-        ${remaining.toLocaleString()} remaining
+        ${remaining.toLocaleString()} {t('remaining')}
       </p>
     </div>
   )
 }
 
 export default function Goals() {
+  const { t } = useLang()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const totalSaved = GOALS.reduce((s, g) => s + g.current, 0)
@@ -60,12 +63,12 @@ export default function Goals() {
         <main className="flex-1 px-4 lg:px-8 py-6 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-text-main text-2xl font-bold">Goals</h1>
-              <p className="text-text-secondary text-sm mt-1">Track your financial goals</p>
+              <h1 className="text-text-main text-2xl font-bold">{t('Goals')}</h1>
+              <p className="text-text-secondary text-sm mt-1">{t('Track your financial goals')}</p>
             </div>
             <button className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
               <Plus size={14} />
-              New Goal
+              {t('New Goal')}
             </button>
           </div>
 
@@ -76,8 +79,8 @@ export default function Goals() {
                 <TrendingUp size={18} className="text-primary" />
               </div>
               <div>
-                <p className="text-text-main font-semibold">Overall Progress</p>
-                <p className="text-text-secondary text-xs">${totalSaved.toLocaleString()} saved of ${totalTarget.toLocaleString()}</p>
+                <p className="text-text-main font-semibold">{t('Overall Progress')}</p>
+                <p className="text-text-secondary text-xs">${totalSaved.toLocaleString()} {t('saved of')} ${totalTarget.toLocaleString()}</p>
               </div>
               <span className="ml-auto text-text-main text-xl font-bold">{overallPct}%</span>
             </div>
